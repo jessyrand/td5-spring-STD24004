@@ -62,4 +62,17 @@ public class IngredientService {
                 size
         );
     }
+
+    public Ingredient saveIngredient(Ingredient ingredient) {
+
+        if (ingredient == null) {
+            throw new RuntimeException("Ingredient cannot be null");
+        }
+
+        if (ingredient.getName() == null || ingredient.getCategory() == null) {
+            throw new RuntimeException("Ingredient name and category are required");
+        }
+
+        return ingredientRepository.saveIngredient(ingredient);
+    }
 }
