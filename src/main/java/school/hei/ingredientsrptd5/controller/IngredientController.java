@@ -5,8 +5,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import school.hei.ingredientsrptd5.entity.Ingredient;
+import school.hei.ingredientsrptd5.entity.StockValue;
+import school.hei.ingredientsrptd5.entity.enums.UnitEnum;
 import school.hei.ingredientsrptd5.service.IngredientService;
 
+import java.time.Instant;
 import java.util.List;
 
 @RestController
@@ -44,5 +47,30 @@ public class IngredientController {
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .body(ingredient);
+    }
+
+    @GetMapping("/ingredients/{id}/stock")
+    public ResponseEntity<?> getStock(
+            @PathVariable int id,
+            @RequestParam(required = false) String at,
+            @RequestParam(required = false) String unit
+    ) {
+
+        if (at == null || unit == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Either mandatory query parameter `at` or `unit` is not provided."
+            );
+        }
+
+        Instant instant = Instant.parse(at);
+        UnitEnum unitEnum = UnitEnum.valueOf(unit);
+
+        StockValue stockValue = ingredientService.getStockValueAt(id, instant, unitEnum);
+
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(stockValue);
     }
 }

@@ -1,11 +1,18 @@
 package school.hei.ingredientsrptd5.service;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 import school.hei.ingredientsrptd5.entity.Ingredient;
+import school.hei.ingredientsrptd5.entity.StockMovement;
+import school.hei.ingredientsrptd5.entity.StockValue;
 import school.hei.ingredientsrptd5.entity.enums.CategoryEnum;
+import school.hei.ingredientsrptd5.entity.enums.MovementTypeEnum;
+import school.hei.ingredientsrptd5.entity.enums.UnitEnum;
 import school.hei.ingredientsrptd5.repository.IngredientRepository;
 import school.hei.ingredientsrptd5.repository.StockMovementRepository;
 
+import java.time.Instant;
 import java.util.List;
 
 @Service
@@ -78,5 +85,39 @@ public class IngredientService {
         }
 
         return ingredientRepository.saveIngredient(ingredient);
+    }
+
+    public StockValue getStockValueAt(int ingredientId, Instant at, UnitEnum unit) {
+
+        Ingredient ingredient = ingredientRepository.findById(ingredientId);
+
+        if (ingredient == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND,
+                    "Ingredient.id=" + ingredientId + " is not found"
+            );
+        }
+
+        List<StockMovement> movements =
+                stockMovementRepository.findByIngredientId(ingredientId);
+
+        double stock = 0.0;
+
+        for (StockMovement sm : movements) {
+            if (!sm.getCreationDatetime().isAfter(at)) {
+
+                if (sm.getType() == MovementTypeEnum.IN) {
+                    stock += sm.getQuantity();
+                } else {
+                    stock -= sm.getQuantity();
+                }
+            }
+        }
+
+        StockValue result = new StockValue();
+        result.setQuantity(stock);
+        result.setUnit(unit);
+
+        return result;
     }
 }
