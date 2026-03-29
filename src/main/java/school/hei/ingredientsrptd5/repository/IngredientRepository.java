@@ -111,4 +111,71 @@ public class IngredientRepository {
 
         return createdIngredients;
     }
+
+    public List<Ingredient> findIngredientsByCriteria(
+            String ingredientName,
+            CategoryEnum category,
+            String dishName,
+            int page,
+            int size
+    ) {
+
+        StringBuilder sql = new StringBuilder("""
+            SELECT i.id, i.name, i.price, i.category
+            FROM ingredient i
+            LEFT JOIN dish_ingredient di ON i.id = di.id_ingredient
+            LEFT JOIN dish d ON di.id_dish = d.id
+            WHERE 1=1
+        """);
+
+        List<Object> params = new ArrayList<>();
+
+        if (ingredientName != null) {
+            sql.append(" AND i.name ILIKE ?");
+            params.add("%" + ingredientName + "%");
+        }
+
+        if (category != null) {
+            sql.append(" AND i.category = ?::category_enum");
+            params.add(category.name());
+        }
+
+        if (dishName != null) {
+            sql.append(" AND d.name ILIKE ?");
+            params.add("%" + dishName + "%");
+        }
+
+        sql.append(" ORDER BY i.id LIMIT ? OFFSET ?");
+
+        int offset = (page - 1) * size;
+        params.add(size);
+        params.add(offset);
+
+        List<Ingredient> ingredients = new ArrayList<>();
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql.toString())) {
+
+            for (int i = 0; i < params.size(); i++) {
+                stmt.setObject(i + 1, params.get(i));
+            }
+
+            ResultSet rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                Ingredient ingredient = new Ingredient();
+                ingredient.setId(rs.getInt("id"));
+                ingredient.setName(rs.getString("name"));
+                ingredient.setPrice(rs.getDouble("price"));
+                ingredient.setCategory(CategoryEnum.valueOf(rs.getString("category")));
+
+                ingredients.add(ingredient);
+            }
+
+            return ingredients;
+
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }

@@ -2,6 +2,7 @@ package school.hei.ingredientsrptd5.service;
 
 import org.springframework.stereotype.Service;
 import school.hei.ingredientsrptd5.entity.Ingredient;
+import school.hei.ingredientsrptd5.entity.enums.CategoryEnum;
 import school.hei.ingredientsrptd5.repository.IngredientRepository;
 import school.hei.ingredientsrptd5.repository.StockMovementRepository;
 
@@ -39,5 +40,26 @@ public class IngredientService {
         }
 
         return ingredientRepository.createIngredients(newIngredients);
+    }
+
+    public List<Ingredient> findIngredientsByCriteria(
+            String ingredientName,
+            CategoryEnum category,
+            String dishName,
+            int page,
+            int size
+    ) {
+
+        if (page <= 0 || size <= 0) {
+            throw new RuntimeException("Page and size must be positive");
+        }
+
+        return ingredientRepository.findIngredientsByCriteria(
+                ingredientName,
+                category,
+                dishName,
+                page,
+                size
+        );
     }
 }
