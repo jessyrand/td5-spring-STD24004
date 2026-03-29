@@ -33,6 +33,10 @@ public class IngredientService {
         return ingredients;
     }
 
+    public Ingredient getById(int id) {
+        return ingredientRepository.findById(id);
+    }
+
     public List<Ingredient> createIngredients(List<Ingredient> newIngredients) {
 
         if (newIngredients == null || newIngredients.isEmpty()) {

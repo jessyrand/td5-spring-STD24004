@@ -2,6 +2,7 @@ package school.hei.ingredientsrptd5.repository;
 
 import org.springframework.stereotype.Repository;
 import school.hei.ingredientsrptd5.entity.Ingredient;
+import school.hei.ingredientsrptd5.entity.StockMovement;
 import school.hei.ingredientsrptd5.entity.enums.CategoryEnum;
 
 import javax.sql.DataSource;
@@ -49,6 +50,36 @@ public class IngredientRepository {
             }
 
             return ingredients;
+
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public Ingredient findById(int id) {
+
+        String sql = """
+        SELECT id, name, price, category
+        FROM ingredient
+        WHERE id = ?
+    """;
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, id);
+            ResultSet rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                Ingredient ingredient = new Ingredient();
+                ingredient.setId(rs.getInt("id"));
+                ingredient.setName(rs.getString("name"));
+                ingredient.setPrice(rs.getDouble("price"));
+                ingredient.setCategory(CategoryEnum.valueOf(rs.getString("category")));
+                return ingredient;
+            }
+
+            return null;
 
         } catch (SQLException e) {
             throw new RuntimeException(e);
