@@ -167,4 +167,44 @@ public class DishRepository {
             throw new RuntimeException(e);
         }
     }
+
+    public List<Dish> findDishsByIngredientName(String ingredientName) {
+
+        String sql = """
+            SELECT DISTINCT d.id, d.name, d.dish_type, d.selling_price
+            FROM dish d
+            JOIN dish_ingredient di ON d.id = di.id_dish
+            JOIN ingredient i ON di.id_ingredient = i.id
+            WHERE i.name ILIKE ?
+        """;
+
+        List<Dish> dishes = new ArrayList<>();
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, "%" + ingredientName + "%");
+
+            ResultSet rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                Dish dish = new Dish();
+                dish.setId(rs.getInt("id"));
+                dish.setName(rs.getString("name"));
+                dish.setDishType(DishTypeEnum.valueOf(rs.getString("dish_type")));
+                dish.setSellingPrice(
+                        rs.getObject("selling_price") != null
+                                ? ((java.math.BigDecimal) rs.getObject("selling_price")).doubleValue()
+                                : null
+                );
+
+                dishes.add(dish);
+            }
+
+            return dishes;
+
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }

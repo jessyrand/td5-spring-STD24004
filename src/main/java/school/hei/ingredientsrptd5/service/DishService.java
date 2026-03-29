@@ -4,6 +4,8 @@ import org.springframework.stereotype.Service;
 import school.hei.ingredientsrptd5.entity.Dish;
 import school.hei.ingredientsrptd5.repository.DishRepository;
 
+import java.util.List;
+
 @Service
 public class DishService {
 
@@ -35,5 +37,14 @@ public class DishService {
         }
 
         return dishRepository.saveDish(dishToSave);
+    }
+
+    public List<Dish> findDishsByIngredientName(String ingredientName) {
+
+        if (ingredientName == null || ingredientName.isBlank()) {
+            throw new RuntimeException("Ingredient name is required");
+        }
+
+        return dishRepository.findDishsByIngredientName(ingredientName);
     }
 }
