@@ -1,6 +1,8 @@
 package school.hei.ingredientsrptd5.service;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 import school.hei.ingredientsrptd5.entity.Dish;
 import school.hei.ingredientsrptd5.repository.DishRepository;
 
@@ -50,5 +52,17 @@ public class DishService {
         }
 
         return dishRepository.findDishsByIngredientName(ingredientName);
+    }
+
+    public void updateDishIngredients(int dishId, List<Integer> ingredientIds) {
+
+        if (ingredientIds == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Request body is required"
+            );
+        }
+
+        dishRepository.updateDishIngredients(dishId, ingredientIds);
     }
 }
