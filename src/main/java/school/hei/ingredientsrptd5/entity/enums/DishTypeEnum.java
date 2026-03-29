@@ -1,4 +1,5 @@
 package school.hei.ingredientsrptd5.entity.enums;
 
 public enum DishTypeEnum {
+    START, MAIN, DESSERT
 }
