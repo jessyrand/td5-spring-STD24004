@@ -7,61 +7,6 @@ public class DataRetriever {
     private DBConnection dbConnection = new DBConnection();
 
 
-    public List<Ingredient> createIngredients(List<Ingredient> newIngredients) {
-
-        String checkSql = "SELECT COUNT(*) FROM ingredient WHERE LOWER(name) = LOWER(?)";
-
-        String insertSql = """
-        INSERT INTO ingredient (name, price, category)
-        VALUES (?, ?, ?::category_enum)
-    """;
-
-        List<Ingredient> createdIngredients = new ArrayList<>();
-
-        try (Connection conn = dbConnection.getDBConnection()) {
-
-            conn.setAutoCommit(false);
-
-            try (PreparedStatement checkStmt = conn.prepareStatement(checkSql);
-                 PreparedStatement insertStmt = conn.prepareStatement(insertSql, Statement.RETURN_GENERATED_KEYS)) {
-
-                for (Ingredient ingredient : newIngredients) {
-
-                    checkStmt.setString(1, ingredient.getName());
-                    ResultSet rs = checkStmt.executeQuery();
-
-                    if (rs.next() && rs.getInt(1) > 0) {
-                        throw new RuntimeException("Ingredient already exists: " + ingredient.getName());
-                    }
-
-                    insertStmt.setString(1, ingredient.getName());
-                    insertStmt.setDouble(2, ingredient.getPrice());
-                    insertStmt.setString(3, ingredient.getCategory().name());
-
-                    insertStmt.executeUpdate();
-
-                    ResultSet generatedKeys = insertStmt.getGeneratedKeys();
-                    if (generatedKeys.next()) {
-                        ingredient.setId(generatedKeys.getInt(1));
-                    }
-
-                    createdIngredients.add(ingredient);
-                }
-
-                conn.commit();
-
-            } catch (Exception e) {
-                conn.rollback();
-                throw e;
-            }
-
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-
-        return createdIngredients;
-    }
-
     public Dish saveDish(Dish dishToSave) {
 
         String insertDishSql = """

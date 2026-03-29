@@ -5,10 +5,7 @@ import school.hei.ingredientsrptd5.entity.Ingredient;
 import school.hei.ingredientsrptd5.entity.enums.CategoryEnum;
 
 import javax.sql.DataSource;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -56,5 +53,62 @@ public class IngredientRepository {
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public List<Ingredient> createIngredients(List<Ingredient> newIngredients) {
+
+        String checkSql = "SELECT COUNT(id) FROM ingredient WHERE LOWER(name) = LOWER(?)";
+
+        String insertSql = """
+            INSERT INTO ingredient (name, price, category)
+            VALUES (?, ?, ?::category_enum)
+        """;
+
+        List<Ingredient> createdIngredients = new ArrayList<>();
+
+        try (Connection conn = dataSource.getConnection()) {
+
+            conn.setAutoCommit(false);
+
+            try (PreparedStatement checkStmt = conn.prepareStatement(checkSql);
+                 PreparedStatement insertStmt = conn.prepareStatement(insertSql, Statement.RETURN_GENERATED_KEYS)) {
+
+                for (Ingredient ingredient : newIngredients) {
+
+                    checkStmt.setString(1, ingredient.getName());
+                    ResultSet rs = checkStmt.executeQuery();
+
+                    if (rs.next() && rs.getInt(1) > 0) {
+                        throw new RuntimeException(
+                                "Ingredient already exists: " + ingredient.getName()
+                        );
+                    }
+
+                    insertStmt.setString(1, ingredient.getName());
+                    insertStmt.setDouble(2, ingredient.getPrice());
+                    insertStmt.setString(3, ingredient.getCategory().name());
+
+                    insertStmt.executeUpdate();
+
+                    ResultSet generatedKeys = insertStmt.getGeneratedKeys();
+                    if (generatedKeys.next()) {
+                        ingredient.setId(generatedKeys.getInt(1));
+                    }
+
+                    createdIngredients.add(ingredient);
+                }
+
+                conn.commit();
+
+            } catch (Exception e) {
+                conn.rollback();
+                throw e;
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+
+        return createdIngredients;
     }
 }

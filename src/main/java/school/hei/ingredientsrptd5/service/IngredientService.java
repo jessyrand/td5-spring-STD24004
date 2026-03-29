@@ -31,4 +31,13 @@ public class IngredientService {
 
         return ingredients;
     }
+
+    public List<Ingredient> createIngredients(List<Ingredient> newIngredients) {
+
+        if (newIngredients == null || newIngredients.isEmpty()) {
+            throw new RuntimeException("Ingredient list cannot be empty");
+        }
+
+        return ingredientRepository.createIngredients(newIngredients);
+    }
 }
