@@ -15,6 +15,10 @@ public class DishService {
         this.dishRepository = dishRepository;
     }
 
+    public List<Dish> getAll() {
+        return dishRepository.findAll();
+    }
+
     public Dish getById(Integer id) {
 
         Dish dish = dishRepository.findById(id);

@@ -1,5 +1,7 @@
 package school.hei.ingredientsrptd5.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -19,6 +21,7 @@ public class Dish {
 
     private List<DishIngredient> dishIngredients;
 
+    @JsonIgnore
     public Double getDishCost() {
 
         double total = 0;
@@ -34,6 +37,7 @@ public class Dish {
         return total;
     }
 
+    @JsonIgnore
     public Double getGrossMargin() {
 
         if (sellingPrice == null) {

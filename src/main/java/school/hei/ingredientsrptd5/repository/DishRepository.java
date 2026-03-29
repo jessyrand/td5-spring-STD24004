@@ -11,7 +11,9 @@ import school.hei.ingredientsrptd5.entity.enums.UnitEnum;
 import javax.sql.DataSource;
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Repository
 public class DishRepository {
@@ -20,6 +22,82 @@ public class DishRepository {
 
     public DishRepository(DataSource dataSource) {
         this.dataSource = dataSource;
+    }
+
+    public List<Dish> findAll() {
+
+        String sql = """
+            SELECT d.id as d_id, d.name as d_name, d.dish_type, d.selling_price,
+                di.quantity_required, di.unit,
+                i.id as i_id, i.name as i_name, i.price, i.category
+            FROM dish d
+            LEFT JOIN dish_ingredient di ON d.id = di.id_dish
+            LEFT JOIN ingredient i ON di.id_ingredient = i.id
+            ORDER BY d.id
+        """;
+
+        List<Dish> dishes = new ArrayList<>();
+        Map<Integer, Dish> dishMap = new HashMap<>();
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            ResultSet rs = stmt.executeQuery();
+
+            while (rs.next()) {
+
+                int dishId = rs.getInt("d_id");
+
+                Dish dish = dishMap.get(dishId);
+
+                if (dish == null) {
+                    dish = new Dish();
+                    dish.setId(dishId);
+                    dish.setName(rs.getString("d_name"));
+                    dish.setDishType(DishTypeEnum.valueOf(rs.getString("dish_type").toUpperCase()));
+
+                    Object price = rs.getObject("selling_price");
+                    dish.setSellingPrice(
+                            price != null ? ((java.math.BigDecimal) price).doubleValue() : null
+                    );
+
+                    dish.setDishIngredients(new ArrayList<>());
+                    dishMap.put(dishId, dish);
+                    dishes.add(dish);
+                }
+
+                Integer ingredientId = (Integer) rs.getObject("i_id");
+
+                if (ingredientId != null) {
+                    Ingredient ingredient = new Ingredient();
+                    ingredient.setId(ingredientId);
+                    ingredient.setName(rs.getString("i_name"));
+                    ingredient.setPrice(rs.getDouble("price"));
+                    ingredient.setCategory(CategoryEnum.valueOf(rs.getString("category").toUpperCase()));
+
+                    DishIngredient di = new DishIngredient();
+                    di.setIngredient(ingredient);
+
+                    Object qtyObj = rs.getObject("quantity_required");
+                    di.setQuantityRequired(
+                            qtyObj != null ? ((Number) qtyObj).doubleValue() : 0.0
+                    );
+
+                    di.setUnit(
+                            rs.getString("unit") != null
+                                    ? UnitEnum.valueOf(rs.getString("unit").toUpperCase())
+                                    : null
+                    );
+
+                    dish.getDishIngredients().add(di);
+                }
+            }
+
+            return dishes;
+
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public Dish findById(Integer id) {
@@ -49,7 +127,7 @@ public class DishRepository {
                     dish = new Dish();
                     dish.setId(rs.getInt("d_id"));
                     dish.setName(rs.getString("d_name"));
-                    dish.setDishType(DishTypeEnum.valueOf(rs.getString("dish_type")));
+                    dish.setDishType(DishTypeEnum.valueOf(rs.getString("dish_type").toUpperCase()));
 
                     Object price = rs.getObject("selling_price");
                     dish.setSellingPrice(
