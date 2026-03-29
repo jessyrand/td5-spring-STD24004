@@ -23,4 +23,17 @@ public class DishService {
 
         return dish;
     }
+
+    public Dish save(Dish dishToSave) {
+
+        if (dishToSave == null) {
+            throw new RuntimeException("Dish cannot be null");
+        }
+
+        if (dishToSave.getName() == null || dishToSave.getDishType() == null) {
+            throw new RuntimeException("Dish name and type are required");
+        }
+
+        return dishRepository.saveDish(dishToSave);
+    }
 }
