@@ -5,6 +5,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import school.hei.ingredientsrptd5.entity.Dish;
+import school.hei.ingredientsrptd5.exception.NotFoundException;
 import school.hei.ingredientsrptd5.repository.DishRepository;
 
 import java.util.List;
@@ -56,6 +57,10 @@ public class DishService {
     }
 
     public Dish updateDishIngredients(int dishId, List<Integer> ingredientIds) {
+
+        if(!dishRepository.checkIfExist(dishId)) {
+            throw new NotFoundException("Dish.id=" + dishId + " not found");
+        }
 
         if (ingredientIds == null) {
             throw new ResponseStatusException(

@@ -319,4 +319,25 @@ public class DishRepository {
         }
     }
 
+    public Boolean checkIfExist(int dishId) {
+
+        String checkSql = """
+            SELECT 1
+            FROM dish
+            WHERE id = ?
+        """;
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(checkSql)) {
+
+            stmt.setInt(1, dishId);
+
+            ResultSet rs = stmt.executeQuery();
+
+            return rs.next();
+
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }
