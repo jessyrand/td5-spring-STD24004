@@ -169,16 +169,15 @@ public class DishRepository {
 
     public Dish saveDish(Dish dishToSave) {
 
-        String insertDishSql = """
-            INSERT INTO dish (name, dish_type, selling_price)
-            VALUES (?, ?::dish_type_enum, ?)
+        String upsertDishSql = """
+            INSERT INTO dish (id, name, dish_type, selling_price)
+            VALUES (?, ?, ?::dish_type_enum, ?)
+            ON CONFLICT (id)
+            DO UPDATE SET
+                name = EXCLUDED.name,
+                dish_type = EXCLUDED.dish_type,
+                selling_price = EXCLUDED.selling_price
             RETURNING id
-        """;
-
-        String updateDishSql = """
-            UPDATE dish
-            SET name = ?, dish_type = ?::dish_type_enum, selling_price = ?
-            WHERE id = ?
         """;
 
         String deleteRelationsSql = "DELETE FROM dish_ingredient WHERE id_dish = ?";
@@ -192,34 +191,27 @@ public class DishRepository {
 
             conn.setAutoCommit(false);
 
-            try (PreparedStatement insertStmt = conn.prepareStatement(insertDishSql);
-                 PreparedStatement updateStmt = conn.prepareStatement(updateDishSql);
+            try (PreparedStatement upsertStmt = conn.prepareStatement(upsertDishSql);
                  PreparedStatement deleteStmt = conn.prepareStatement(deleteRelationsSql);
                  PreparedStatement insertRelStmt = conn.prepareStatement(insertRelationSql)) {
 
                 if (dishToSave.getId() == null) {
-
-                    insertStmt.setString(1, dishToSave.getName());
-                    insertStmt.setString(2, dishToSave.getDishType().name());
-                    insertStmt.setObject(3, dishToSave.getSellingPrice());
-
-                    ResultSet rs = insertStmt.executeQuery();
-                    if (rs.next()) {
-                        dishToSave.setId(rs.getInt(1));
-                    }
-
+                    upsertStmt.setNull(1, Types.INTEGER);
                 } else {
-
-                    updateStmt.setString(1, dishToSave.getName());
-                    updateStmt.setString(2, dishToSave.getDishType().name());
-                    updateStmt.setObject(3, dishToSave.getSellingPrice());
-                    updateStmt.setInt(4, dishToSave.getId());
-
-                    updateStmt.executeUpdate();
-
-                    deleteStmt.setInt(1, dishToSave.getId());
-                    deleteStmt.executeUpdate();
+                    upsertStmt.setInt(1, dishToSave.getId());
                 }
+
+                upsertStmt.setString(2, dishToSave.getName());
+                upsertStmt.setString(3, dishToSave.getDishType().name());
+                upsertStmt.setObject(4, dishToSave.getSellingPrice());
+
+                ResultSet rs = upsertStmt.executeQuery();
+                if (rs.next()) {
+                    dishToSave.setId(rs.getInt(1));
+                }
+
+                deleteStmt.setInt(1, dishToSave.getId());
+                deleteStmt.executeUpdate();
 
                 if (dishToSave.getDishIngredients() != null) {
                     for (DishIngredient di : dishToSave.getDishIngredients()) {
@@ -229,8 +221,10 @@ public class DishRepository {
                         insertRelStmt.setDouble(3, di.getQuantityRequired());
                         insertRelStmt.setString(4, di.getUnit().name());
 
-                        insertRelStmt.executeUpdate();
+                        insertRelStmt.addBatch();
                     }
+
+                    insertRelStmt.executeBatch();
                 }
 
                 conn.commit();
@@ -293,7 +287,7 @@ public class DishRepository {
         String insertSql = """
             INSERT INTO dish_ingredient (id_dish, id_ingredient, quantity_required, unit)
             VALUES (?, ?, 1, 'KG')
-        """;
+         """;
 
         try (Connection conn = dataSource.getConnection()) {
 

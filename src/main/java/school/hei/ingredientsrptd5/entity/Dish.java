@@ -2,6 +2,7 @@ package school.hei.ingredientsrptd5.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -19,8 +20,13 @@ public class Dish {
     private DishTypeEnum dishType;
     private Double sellingPrice;
 
+    @JsonIgnore
     private List<DishIngredient> dishIngredients;
 
+    @JsonProperty("ingredients")
+    public List<Ingredient> getIngredients() {
+        return dishIngredients.stream().map(DishIngredient::getIngredient).toList();
+    }
     @JsonIgnore
     public Double getDishCost() {
 
