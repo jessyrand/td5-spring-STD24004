@@ -39,11 +39,11 @@ public class DishController {
         }
 
         try {
-            dishService.updateDishIngredients(id, ingredientIds);
+            Dish updatedDish = dishService.updateDishIngredients(id, ingredientIds);
 
             return ResponseEntity
-                    .status(HttpStatus.NO_CONTENT)
-                    .build();
+                    .status(HttpStatus.OK)
+                    .body(updatedDish);
 
         } catch (RuntimeException e) {
 

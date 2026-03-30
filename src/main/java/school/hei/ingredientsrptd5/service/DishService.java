@@ -1,6 +1,7 @@
 package school.hei.ingredientsrptd5.service;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import school.hei.ingredientsrptd5.entity.Dish;
@@ -54,7 +55,7 @@ public class DishService {
         return dishRepository.findDishsByIngredientName(ingredientName);
     }
 
-    public void updateDishIngredients(int dishId, List<Integer> ingredientIds) {
+    public Dish updateDishIngredients(int dishId, List<Integer> ingredientIds) {
 
         if (ingredientIds == null) {
             throw new ResponseStatusException(
@@ -64,5 +65,6 @@ public class DishService {
         }
 
         dishRepository.updateDishIngredients(dishId, ingredientIds);
+        return dishRepository.findById(dishId);
     }
 }

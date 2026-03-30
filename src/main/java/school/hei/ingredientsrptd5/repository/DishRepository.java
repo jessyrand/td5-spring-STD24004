@@ -281,44 +281,31 @@ public class DishRepository {
     }
     public void updateDishIngredients(int dishId, List<Integer> ingredientIds) {
 
-        String checkDishSql = "SELECT COUNT(id) FROM dish WHERE id = ?";
-        String checkIngredientSql = "SELECT id FROM ingredient WHERE id = ?";
         String deleteSql = "DELETE FROM dish_ingredient WHERE id_dish = ?";
+
         String insertSql = """
             INSERT INTO dish_ingredient (id_dish, id_ingredient, quantity_required, unit)
             VALUES (?, ?, 1, 'KG')
-         """;
+        """;
 
         try (Connection conn = dataSource.getConnection()) {
 
             conn.setAutoCommit(false);
 
-            try (PreparedStatement checkDishStmt = conn.prepareStatement(checkDishSql);
-                 PreparedStatement checkIngredientStmt = conn.prepareStatement(checkIngredientSql);
-                 PreparedStatement deleteStmt = conn.prepareStatement(deleteSql);
+            try (PreparedStatement deleteStmt = conn.prepareStatement(deleteSql);
                  PreparedStatement insertStmt = conn.prepareStatement(insertSql)) {
-
-                checkDishStmt.setInt(1, dishId);
-                ResultSet rs = checkDishStmt.executeQuery();
-
-                if (rs.next() && rs.getInt(1) == 0) {
-                    throw new RuntimeException("Dish.id=" + dishId + " is not found");
-                }
 
                 deleteStmt.setInt(1, dishId);
                 deleteStmt.executeUpdate();
 
                 for (Integer ingredientId : ingredientIds) {
+                    insertStmt.setInt(1, dishId);
+                    insertStmt.setInt(2, ingredientId);
 
-                    checkIngredientStmt.setInt(1, ingredientId);
-                    ResultSet rsIng = checkIngredientStmt.executeQuery();
-
-                    if (rsIng.next()) {
-                        insertStmt.setInt(1, dishId);
-                        insertStmt.setInt(2, ingredientId);
-                        insertStmt.executeUpdate();
-                    }
+                    insertStmt.addBatch();
                 }
+
+                insertStmt.executeBatch();
 
                 conn.commit();
 
