@@ -10,7 +10,7 @@ import school.hei.ingredientsrptd5.service.DishService;
 import java.util.List;
 
 @RestController
-@RequestMapping
+@RequestMapping("/dishes")
 public class DishController {
 
     private final DishService dishService;
@@ -19,7 +19,7 @@ public class DishController {
         this.dishService = dishService;
     }
 
-    @GetMapping("/dishes")
+    @GetMapping
     public ResponseEntity<?> getDishes() {
         List<Dish> dishes = dishService.getAll();
         return ResponseEntity
@@ -27,7 +27,7 @@ public class DishController {
                 .body(dishes);
     }
 
-    @PutMapping("/dishes/{id}/ingredients")
+    @PutMapping("{id}/ingredients")
     public ResponseEntity<?> updateDishIngredients(
             @PathVariable int id,
             @RequestBody(required = false) List<Integer> ingredientIds

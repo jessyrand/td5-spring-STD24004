@@ -13,6 +13,7 @@ import java.time.Instant;
 import java.util.List;
 
 @RestController
+@RequestMapping("/ingredients")
 public class IngredientController {
 
     private final IngredientService ingredientService;
@@ -21,7 +22,7 @@ public class IngredientController {
         this.ingredientService = ingredientService;
     }
 
-    @GetMapping ("/ingredients")
+    @GetMapping
     public ResponseEntity<?> getIngredients(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size
@@ -33,7 +34,7 @@ public class IngredientController {
                     .body(ingredients);
     }
 
-    @GetMapping("/ingredients/{id}")
+    @GetMapping("/{id}")
     public ResponseEntity<?> getIngredientById(@PathVariable int id) {
         Ingredient ingredient = ingredientService.getById(id);
 
@@ -49,7 +50,7 @@ public class IngredientController {
                 .body(ingredient);
     }
 
-    @GetMapping("/ingredients/{id}/stock")
+    @GetMapping("/{id}/stock")
     public ResponseEntity<?> getStock(
             @PathVariable int id,
             @RequestParam(required = false) String at,
