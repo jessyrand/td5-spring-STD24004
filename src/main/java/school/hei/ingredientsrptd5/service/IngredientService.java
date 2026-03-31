@@ -120,4 +120,23 @@ public class IngredientService {
 
         return result;
     }
+
+    public List<StockMovement> getStockMovementsBetweenTwoDates(
+            int ingredientId,
+            Instant from,
+            Instant to
+    ) {
+
+        Ingredient ingredient = ingredientRepository.findById(ingredientId);
+
+        if (ingredient == null) {
+            throw new RuntimeException("Ingredient.id=" + ingredientId + " is not found");
+        }
+
+        return stockMovementRepository.findByIngredientIdAndDateRange(
+                ingredientId,
+                from,
+                to
+        );
+    }
 }

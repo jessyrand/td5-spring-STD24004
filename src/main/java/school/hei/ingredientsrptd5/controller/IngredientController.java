@@ -5,6 +5,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import school.hei.ingredientsrptd5.entity.Ingredient;
+import school.hei.ingredientsrptd5.entity.StockMovement;
 import school.hei.ingredientsrptd5.entity.StockValue;
 import school.hei.ingredientsrptd5.entity.enums.UnitEnum;
 import school.hei.ingredientsrptd5.service.IngredientService;
@@ -73,5 +74,44 @@ public class IngredientController {
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .body(stockValue);
+    }
+
+    @GetMapping("/{id}/stockMovements")
+    public ResponseEntity<?> getStockMovements(
+            @PathVariable int id,
+            @RequestParam(required = false) String from,
+            @RequestParam(required = false) String to
+    ) {
+
+        if (from == null || to == null) {
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body("Query params 'from' and 'to' are required");
+        }
+
+        try {
+
+            Instant fromInstant = Instant.parse(from);
+            Instant toInstant = Instant.parse(to);
+
+            List<StockMovement> result =
+                    ingredientService.getStockMovementsBetweenTwoDates(id, fromInstant, toInstant);
+
+            return ResponseEntity
+                    .status(HttpStatus.OK)
+                    .body(result);
+
+        } catch (RuntimeException e) {
+
+            if (e.getMessage().contains("not found")) {
+                return ResponseEntity
+                        .status(HttpStatus.NOT_FOUND)
+                        .body(e.getMessage());
+            }
+
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(e.getMessage());
+        }
     }
 }

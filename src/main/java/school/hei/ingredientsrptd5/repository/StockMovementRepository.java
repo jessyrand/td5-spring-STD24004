@@ -6,10 +6,8 @@ import school.hei.ingredientsrptd5.entity.enums.MovementTypeEnum;
 import school.hei.ingredientsrptd5.entity.enums.UnitEnum;
 
 import javax.sql.DataSource;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -61,5 +59,54 @@ public class StockMovementRepository {
         }
 
         return movements;
+    }
+
+    public List<StockMovement> findByIngredientIdAndDateRange(
+            int ingredientId,
+            Instant from,
+            Instant to
+    ) {
+
+        String sql = """
+            SELECT id, quantity, type, unit, creation_datetime
+            FROM stock_movement
+            WHERE id_ingredient = ?
+            AND creation_datetime BETWEEN ? AND ?
+            ORDER BY creation_datetime
+        """;
+
+        List<StockMovement> movements = new ArrayList<>();
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, ingredientId);
+            stmt.setTimestamp(2, Timestamp.from(from));
+            stmt.setTimestamp(3, Timestamp.from(to));
+
+            ResultSet rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                StockMovement sm = new StockMovement();
+                sm.setId(rs.getInt("id"));
+                sm.setQuantity(rs.getDouble("quantity"));
+                sm.setType(
+                        MovementTypeEnum.valueOf(rs.getString("type").toUpperCase())
+                );
+                sm.setUnit(
+                        UnitEnum.valueOf(rs.getString("unit").toUpperCase())
+                );
+                sm.setCreationDatetime(
+                        rs.getTimestamp("creation_datetime").toInstant()
+                );
+
+                movements.add(sm);
+            }
+
+            return movements;
+
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
