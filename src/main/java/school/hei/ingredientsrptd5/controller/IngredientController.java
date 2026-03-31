@@ -4,6 +4,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
+import school.hei.ingredientsrptd5.entity.CreateStockMovement;
 import school.hei.ingredientsrptd5.entity.Ingredient;
 import school.hei.ingredientsrptd5.entity.StockMovement;
 import school.hei.ingredientsrptd5.entity.StockValue;
@@ -99,6 +100,41 @@ public class IngredientController {
 
             return ResponseEntity
                     .status(HttpStatus.OK)
+                    .body(result);
+
+        } catch (RuntimeException e) {
+
+            if (e.getMessage().contains("not found")) {
+                return ResponseEntity
+                        .status(HttpStatus.NOT_FOUND)
+                        .body(e.getMessage());
+            }
+
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/{id}/stockMovements")
+    public ResponseEntity<?> createStockMovements(
+            @PathVariable int id,
+            @RequestBody(required = false) List<CreateStockMovement> body
+    ) {
+
+        if (body == null || body.isEmpty()) {
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body("Request body is required");
+        }
+
+        try {
+
+            List<StockMovement> result =
+                    ingredientService.createStockMovements(id, body);
+
+            return ResponseEntity
+                    .status(HttpStatus.CREATED)
                     .body(result);
 
         } catch (RuntimeException e) {

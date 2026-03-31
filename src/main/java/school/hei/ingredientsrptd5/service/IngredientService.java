@@ -3,6 +3,7 @@ package school.hei.ingredientsrptd5.service;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import school.hei.ingredientsrptd5.entity.CreateStockMovement;
 import school.hei.ingredientsrptd5.entity.Ingredient;
 import school.hei.ingredientsrptd5.entity.StockMovement;
 import school.hei.ingredientsrptd5.entity.StockValue;
@@ -138,5 +139,23 @@ public class IngredientService {
                 from,
                 to
         );
+    }
+
+    public List<StockMovement> createStockMovements(
+            int ingredientId,
+            List<CreateStockMovement> inputs
+    ) {
+
+        Ingredient ingredient = ingredientRepository.findById(ingredientId);
+
+        if (ingredient == null) {
+            throw new RuntimeException("Ingredient.id=" + ingredientId + " is not found");
+        }
+
+        if (inputs == null || inputs.isEmpty()) {
+            throw new RuntimeException("Request body is required");
+        }
+
+        return stockMovementRepository.saveStockMovements(ingredientId, inputs);
     }
 }

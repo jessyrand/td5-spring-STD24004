@@ -1,6 +1,7 @@
 package school.hei.ingredientsrptd5.repository;
 
 import org.springframework.stereotype.Repository;
+import school.hei.ingredientsrptd5.entity.CreateStockMovement;
 import school.hei.ingredientsrptd5.entity.StockMovement;
 import school.hei.ingredientsrptd5.entity.enums.MovementTypeEnum;
 import school.hei.ingredientsrptd5.entity.enums.UnitEnum;
@@ -104,6 +105,57 @@ public class StockMovementRepository {
             }
 
             return movements;
+
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public List<StockMovement> saveStockMovements(
+            int ingredientId,
+            List<CreateStockMovement> inputs
+    ) {
+
+        String sql = """
+            INSERT INTO stock_movement (id_ingredient, quantity, type, unit, creation_datetime)
+            VALUES (?, ?, ?::movement_type, ?::unit_enum, ?)
+            RETURNING id, quantity, type, unit, creation_datetime
+        """;
+
+        List<StockMovement> result = new ArrayList<>();
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            for (CreateStockMovement input : inputs) {
+
+                stmt.setInt(1, ingredientId);
+                stmt.setDouble(2, input.getQuantity());
+                stmt.setString(3, input.getType().name());
+                stmt.setString(4, input.getUnit().name());
+                stmt.setTimestamp(5, Timestamp.from(Instant.now()));
+
+                ResultSet rs = stmt.executeQuery();
+
+                if (rs.next()) {
+                    StockMovement sm = new StockMovement();
+                    sm.setId(rs.getInt("id"));
+                    sm.setQuantity(rs.getDouble("quantity"));
+                    sm.setType(
+                            MovementTypeEnum.valueOf(rs.getString("type").toUpperCase())
+                    );
+                    sm.setUnit(
+                            UnitEnum.valueOf(rs.getString("unit").toUpperCase())
+                    );
+                    sm.setCreationDatetime(
+                            rs.getTimestamp("creation_datetime").toInstant()
+                    );
+
+                    result.add(sm);
+                }
+            }
+
+            return result;
 
         } catch (SQLException e) {
             throw new RuntimeException(e);
